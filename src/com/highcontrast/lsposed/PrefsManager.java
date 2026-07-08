@@ -2,10 +2,12 @@ package com.highcontrast.lsposed;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 import java.io.File;
 import java.io.FileWriter;
 
 public class PrefsManager {
+    private static final String TAG = "HighContrastLSP";
     private static final String PREFS_NAME = "high_contrast_prefs";
     private static final String KEY_ENABLED = "enabled";
     private static final String KEY_PRESET = "preset";
@@ -27,7 +29,6 @@ public class PrefsManager {
 
     public void setEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_ENABLED, enabled).apply();
-        exportConfig();
     }
 
     public String getPresetId() {
@@ -36,31 +37,38 @@ public class PrefsManager {
 
     public void setPresetId(String id) {
         prefs.edit().putString(KEY_PRESET, id).apply();
-        exportConfig();
     }
 
     public int getStrokeWidth() {
-        return prefs.getInt(KEY_STROKE_WIDTH, 2);
+        int w = prefs.getInt(KEY_STROKE_WIDTH, 2);
+        return Math.max(1, Math.min(6, w));
     }
 
     public void setStrokeWidth(int width) {
         prefs.edit().putInt(KEY_STROKE_WIDTH, Math.max(1, Math.min(6, width))).apply();
-        exportConfig();
     }
 
     public void exportConfig() {
+        String content = "enabled=" + isEnabled() + "\n"
+            + "preset=" + getPresetId() + "\n"
+            + "stroke_width=" + getStrokeWidth() + "\n";
+
         try {
-            String content = "enabled=" + isEnabled() + "\n"
-                + "preset=" + getPresetId() + "\n"
-                + "stroke_width=" + getStrokeWidth() + "\n";
             FileWriter fw = new FileWriter(CONFIG_PATH);
             fw.write(content);
             fw.close();
-
-            File f = new File(CONFIG_PATH);
-            f.setReadable(true, false);
+            new File(CONFIG_PATH).setReadable(true, false);
         } catch (Throwable t) {
-            android.util.Log.e("HighContrastLSP", "Config export failed", t);
+            Log.w(TAG, "Cannot write to /data/local/tmp/, trying internal", t);
+            try {
+                File f = new File(context.getFilesDir(), "config.txt");
+                FileWriter fw = new FileWriter(f);
+                fw.write(content);
+                fw.close();
+                f.setReadable(true, false);
+            } catch (Throwable t2) {
+                Log.e(TAG, "Config export completely failed", t2);
+            }
         }
     }
 }
