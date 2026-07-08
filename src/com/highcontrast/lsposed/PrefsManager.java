@@ -2,19 +2,23 @@ package com.highcontrast.lsposed;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import java.io.File;
+import java.io.FileWriter;
 
 public class PrefsManager {
     private static final String PREFS_NAME = "high_contrast_prefs";
     private static final String KEY_ENABLED = "enabled";
     private static final String KEY_PRESET = "preset";
     private static final String KEY_STROKE_WIDTH = "stroke_width";
-    private static final String KEY_CUSTOM_TEXT_COLOR = "custom_text_color";
-    private static final String KEY_CUSTOM_STROKE_COLOR = "custom_stroke_color";
+
+    public static final String CONFIG_PATH = "/data/local/tmp/high_contrast_config.txt";
 
     private final SharedPreferences prefs;
+    private final Context context;
 
     public PrefsManager(Context context) {
-        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
+        this.context = context;
+        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
     public boolean isEnabled() {
@@ -23,6 +27,7 @@ public class PrefsManager {
 
     public void setEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_ENABLED, enabled).apply();
+        exportConfig();
     }
 
     public String getPresetId() {
@@ -31,6 +36,7 @@ public class PrefsManager {
 
     public void setPresetId(String id) {
         prefs.edit().putString(KEY_PRESET, id).apply();
+        exportConfig();
     }
 
     public int getStrokeWidth() {
@@ -39,20 +45,22 @@ public class PrefsManager {
 
     public void setStrokeWidth(int width) {
         prefs.edit().putInt(KEY_STROKE_WIDTH, Math.max(1, Math.min(6, width))).apply();
+        exportConfig();
     }
 
-    public int getCustomTextColor() {
-        return prefs.getInt(KEY_CUSTOM_TEXT_COLOR, 0xFF000000);
-    }
+    public void exportConfig() {
+        try {
+            String content = "enabled=" + isEnabled() + "\n"
+                + "preset=" + getPresetId() + "\n"
+                + "stroke_width=" + getStrokeWidth() + "\n";
+            FileWriter fw = new FileWriter(CONFIG_PATH);
+            fw.write(content);
+            fw.close();
 
-    public int getCustomStrokeColor() {
-        return prefs.getInt(KEY_CUSTOM_STROKE_COLOR, 0xFFFFFFFF);
-    }
-
-    public void setCustomColors(int textColor, int strokeColor) {
-        prefs.edit()
-            .putInt(KEY_CUSTOM_TEXT_COLOR, textColor)
-            .putInt(KEY_CUSTOM_STROKE_COLOR, strokeColor)
-            .apply();
+            File f = new File(CONFIG_PATH);
+            f.setReadable(true, false);
+        } catch (Throwable t) {
+            android.util.Log.e("HighContrastLSP", "Config export failed", t);
+        }
     }
 }
