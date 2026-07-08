@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.highcontrast.lsposed"
-    android:versionCode="1"
-    android:versionName="1.0">
+    android:versionCode="2"
+    android:versionName="1.1">
+
+    <uses-sdk
+        android:minSdkVersion="27"
+        android:targetSdkVersion="34" />
 
     <application
         android:allowBackup="true"
@@ -14,13 +18,10 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="High contrast text with customizable outline stroke for better readability on complex backgrounds" />
+            android:value="High contrast text with customizable outline stroke. Adds text-stroke effect for readability on complex backgrounds." />
         <meta-data
             android:name="xposedminversion"
             android:value="93" />
-        <meta-data
-            android:name="xposedscope"
-            android:resource="@array/xposed_scope" />
 
         <activity
             android:name="com.highcontrast.lsposed.SettingsActivity"
